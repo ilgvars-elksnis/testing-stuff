@@ -1,0 +1,34 @@
+Resources:
+  UsersTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Delete
+    Properties:
+      TableName: ${self:custom.prefix}-${env:USERS_TABLE_NAME}
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: username
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+      - IndexName: UsernameIndex
+        KeySchema:
+        - AttributeName: username
+          KeyType: HASH
+        Projection:
+          NonKeyAttributes:
+          - vards
+          - uzvards
+          - loma
+          - email
+          - Komentāri
+          - parole
+          ProjectionType: INCLUDE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1

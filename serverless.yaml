@@ -1,0 +1,67 @@
+service: aws-sls-tm-${env:TEAMNAME}
+useDotenv: true
+frameworkVersion: '3'
+package:
+  individually: true
+custom:
+  prefix: ${self:service}-${opt:stage}
+  dynamodb:
+    stages:
+      - local
+    start:
+      port: 4000 
+      inMemory: true
+      heapInitial: 10m
+      heapMax: 100m
+      migrate: true
+      convertEmptyValues: true
+provider:
+  environment:
+    STAGE: ${opt:stage}
+    SERVICE: ${self:service}
+    TEAMNAME: ${env:TEAMNAME}
+    USERS_TABLE_NAME: ${env:USERS_TABLE_NAME}
+  name: aws
+  region: ${env:AWS_REGION}
+  runtime: nodejs12.x
+  lambdaHashingVersion: 20201221
+  iam:
+    role:
+      name: ${self:custom.prefix}-lambda-role
+      statements: # permissions for all of your functions can be set here
+        - Effect: Allow
+          Action: # Gives permission to DynamoDB tables in a specific region
+            - dynamodb:*
+          Resource: '*'
+
+functions:
+  deleteUserByUsername:
+    handler: handlers/v2/users/deleteUserByUsername.default
+    name: ${self:custom.prefix}-deleteUserByUsername
+    events:
+    - http:
+        path: /api/v2/users/{username}
+        method: delete
+  getUserByUsername:
+    handler: handlers/v2/users/getUserByUsername.default
+    name: ${self:custom.prefix}-getUserByUsername
+    events:
+    - http:
+        path: /api/v2/users/{username}
+        method: get
+  postUser:
+    handler:  handlers/v2/users/postUser.default
+    name: ${self:custom.prefix}-postUser
+    events:
+    - http:
+        path: /api/v2/users
+        method: post
+  
+
+plugins:
+  - serverless-bundle
+  - serverless-dynamodb-local
+  - serverless-offline
+resources:
+  - Resources:
+  - ${file(sls-config/resources/users.yml)}
